@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Neon Flip: Gravity Rush — Ultimate</title>
+  <!-- Embedded SVG favicon data URI -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23000' width='100' height='100'/%3E%3Ctext x='50' y='58' font-size='48' text-anchor='middle' fill='%2300ffff' font-family='Poppins, sans-serif'%3E%F0%9F%8C%8C%3C/text%3E%3C/svg%3E">
+  <style>
+    :root{
+      --neon: #0ff;
+      --accent:#f0f;
+      --bg1:#050505;
+      --bg2:#000;
+      --ui:#0ff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(circle at center,var(--bg1),var(--bg2));font-family:Poppins, sans-serif;color:var(--ui);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:1200px;margin:10px auto;padding:12px;text-align:center}
+    h1{margin:6px 0 4px;font-size:1.6rem;text-shadow:0 0 20px var(--neon);animation:glow 2s infinite alternate}
+    @keyframes glow{from{text-shadow:0 0 10px var(--neon)}to{text-shadow:0 0 25px var(--neon),0 0 50px var(--neon)}}
+    #canvasContainer{position:relative;margin:18px auto;max-width:100vw}
+    canvas{display:block;width:calc(min(100vw - 40px, 1200px));height:auto;border-radius:12px;border:2px solid rgba(0,255,255,0.08);box-shadow:0 0 30px rgba(0,255,255,0.08);background:linear-gradient(180deg,#111,#000)}
+    .hud{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap}
+    .btn{background:none;border:2px solid var(--neon);color:var(--ui);padding:8px 12px;border-radius:8px;cursor:pointer;transition:.2s;backdrop-filter:blur(4px)}
+    .btn:hover{background:var(--neon);color:#000;box-shadow:0 0 20px var(--neon)}
+    #pauseBtn{position:absolute;top:10px;right:12px;z-index:8}
+    #fullscreenBtn{position:absolute;top:10px;right:90px;z-index:8}
+    #controls{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .small{font-size:0.9rem;padding:6px 10px}
+    #scoreBox{font-size:1rem;text-shadow:0 0 10px var(--neon)}
+    #lives{display:flex;gap:4px;align-items:center}
+    .heart{width:18px;height:18px;border-radius:4px;background:linear-gradient(90deg,#f33,#a00);box-shadow:0 0 6px #f33}
+    #themePicker{display:flex;gap:6px}
+    .themeDot{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,0.06)}
+    #message{position:absolute;left:50%;transform:translateX(-50%);top:40%;z-index:6;font-size:2rem;text-shadow:0 0 20px var(--neon);pointer-events:none}
+    #tutorial{font-size:0.9rem;opacity:0.9;margin-top:6px}
+    #powerList{display:flex;gap:6px;justify-content:center;align-items:center}
+    .powerDot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.08);display:inline-block}
+    .meter{height:8px;border-radius:6px;background:rgba(255,255,255,0.04);overflow:hidden;min-width:120px}
+    .meterInner{height:100%;background:linear-gradient(90deg,var(--neon),var(--accent));width:0%}
+    footer{margin-top:10px;font-size:0.85rem;color:rgba(0,255,255,0.7)}
+    @media (max-width:520px){h1{font-size:1.2rem}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🌌 Neon Flip: Gravity Rush — Ultimate</h1>
+
+    <div id="canvasContainer">
+      <button id="pauseBtn" class="btn small">Pause</button>
+      <button id="fullscreenBtn" class="btn small">Fullscreen</button>
+      <div id="message"></div>
+      <canvas id="gameCanvas" width="800" height="300"></canvas>
+    </div>
+
+    <div class="hud">
+      <div id="scoreBox">Score: <strong id="score">0</strong></div>
+      <div id="lives" title="Lives"></div>
+      <div id="levelBox">Level: <span id="level">1</span></div>
+      <div class="meter" title="Progress">
+        <div class="meterInner" id="progressBar"></div>
+      </div>
+      <div id="highScore">High: <strong id="high">0</strong></div>
+    </div>
+
+    <div id="controls" style="margin-top:8px">
+      <button id="restartBtn" class="btn small">Restart</button>
+      <button id="soundToggle" class="btn small">Music: On</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:0.9rem">Theme:</label>
+        <div id="themePicker">
+          <div class="themeDot" data-color="#0ff,#f0f" style="background:linear-gradient(45deg,#0ff,#00d1ff)"></div>
+          <div class="themeDot" data-color="#ff6ad5,#8b00ff" style="background:linear-gradient(45deg,#ff6ad5,#8b00ff)"></div>
+          <div class="themeDot" data-color="#00ff9f,#00d177" style="background:linear-gradient(45deg,#00ff9f,#00d177)"></div>
+          <div class="themeDot" data-color="#ffe66b,#ff8a00" style="background:linear-gradient(45deg,#ffe66b,#ff8a00)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <div id="powerList"></div>
+      <div id="tutorial">Press <strong>Space</strong> to Flip • <strong>P</strong> Pause • <strong>F</strong> Fullscreen</div>
+    </div>
+
+    <footer></footer>
+  </div>
+
+<script>
+(() => {
+  // ---------- CONFIG & STATE ----------
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const highEl = document.getElementById('high');
+  const levelEl = document.getElementById('level');
+  const livesEl = document.getElementById('lives');
+  const restartBtn = document.getElementById('restartBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const soundToggle = document.getElementById('soundToggle');
+  const message = document.getElementById('message');
+  const themePicker = document.getElementById('themePicker');
+  const powerList = document.getElementById('powerList');
+  const progressBar = document.getElementById('progressBar');
+
+  const LOGICAL_W = 800, LOGICAL_H = 300;
+  canvas.width = LOGICAL_W;
+  canvas.height = LOGICAL_H;
+
+  // State
+  let player, obstacles, particles, stars, powerUps;
+  let frame = 0, score = 0, highScore = 0, gameOver = false, paused = false;
+  let speedBase = 6, speed = speedBase, lives = 3, level = 1;
+  let countdown = 3, running = false;
+  let scoreMultiplier = 1;
+  let activePowers = { slow: 0, shield: 0, double: 0 };
+  const POWER_DURATION = 600; // frames (~10s at 60fps)
+  const LOCAL_KEY = 'neonflip_highscore_v1';
+
+  // Theme defaults (neon + accent)
+  let neon = '#00ffff', accent = '#ff00ff';
+  setTheme(neon, accent);
+
+  // ---------- AUDIO (WebAudio) ----------
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioCtx();
+  let musicOn = true, musicNode = null;
+  let masterGain = audioCtx.createGain(); masterGain.gain.value = 0.12; masterGain.connect(audioCtx.destination);
+
+  function playBeep(freq = 440, type='sine', time=0.06, gain=0.25){
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g); g.connect(masterGain);
+    o.start();
+    o.stop(audioCtx.currentTime + time);
+  }
+
+  function startMusic(){
+    if (musicNode) return;
+    // simple ambient loop with subtle movement
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = 60;
+    g.gain.value = 0.04;
+    o.connect(g); g.connect(masterGain);
+    o.start();
+    musicNode = {osc:o,gain:g};
+  }
+  function stopMusic(){
+    if (!musicNode) return;
+    try{ musicNode.osc.stop(); }catch(e){}
+    musicNode = null;
+  }
+
+  // ---------- UTIL ----------
+  function rand(min,max){return Math.random()*(max-min)+min}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function nowFrames(){return frame}
+
+  // ---------- INIT SCENE ----------
+  function resetGame(){
+    player = { x:50, y:230, size:25, dy:0, gravity:0.8, flipped:false, trail:[] };
+    obstacles = [];
+    particles = [];
+    stars = createStars();
+    powerUps = [];
+    frame = 0;
+    score = 0;
+    speedBase = 6;
+    speed = speedBase;
+    lives = 3;
+    level = 1;
+    gameOver = false;
+    paused = false;
+    countdown = 3;
+    running = false;
+    scoreMultiplier = 1;
+    activePowers = { slow:0, shield:0, double:0 };
+    updateHUD();
+    message.innerHTML = '';
+    showMessage(`3`);
+    setTimeout(() => startCountdown(), 300);
+  }
+
+  function createStars(){
+    const layers = [];
+    for(let l=0;l<3;l++){
+      const layer = [];
+      const count = 30 + l*20;
+      for(let i=0;i<count;i++){
+        layer.push({ x:rand(0,LOGICAL_W), y:rand(0,LOGICAL_H), size:rand(0.5,2.2), speed: (l+1)*0.2 + Math.random()*0.2 });
+      }
+      layers.push(layer);
+    }
+    return layers;
+  }
+
+  // ---------- DRAW ----------
+  function drawStars(){
+    for(let i=0;i<stars.length;i++){
+      const layer = stars[i];
+      ctx.save();
+      ctx.globalAlpha = 0.9 - i*0.25;
+      for(const s of layer){
+        ctx.fillStyle = (i===1)?accent:neon;
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawGround(){
+    ctx.strokeStyle = neon;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = neon;
+    ctx.beginPath();
+    ctx.moveTo(0, LOGICAL_H-20);
+    ctx.lineTo(LOGICAL_W, LOGICAL_H-20);
+    ctx.moveTo(0, 20);
+    ctx.lineTo(LOGICAL_W, 20);
+    ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+
+  function drawPlayer(){
+    // trail
+    for(let i=0;i<player.trail.length;i++){
+      const t = player.trail[i];
+      ctx.fillStyle = `rgba(0,255,255,${t.opacity})`;
+      ctx.fillRect(t.x, t.y, player.size, player.size);
+    }
+    // main
+    ctx.fillStyle = neon;
+    ctx.shadowBlur = 24; ctx.shadowColor = neon;
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+    ctx.shadowBlur = 0;
+
+    // add trail point
+    player.trail.push({x:player.x, y:player.y, opacity:0.5});
+    if(player.trail.length>14) player.trail.shift();
+    player.trail.forEach(t => t.opacity -= 0.02);
+  }
+
+  function drawObstacle(ob){
+    ctx.fillStyle = accent;
+    ctx.shadowBlur = 12; ctx.shadowColor = accent;
+    ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+    ctx.shadowBlur = 0;
+  }
+
+  function drawPower(p){
+    // simple circle with symbol
+    ctx.beginPath();
+    ctx.fillStyle = '#fff';
+    ctx.arc(p.x + p.size/2, p.y + p.size/2, p.size/2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 14px Poppins, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(p.type[0].toUpperCase(), p.x + p.size/2, p.y + p.size/2);
+  }
+
+  function drawParticles(){
+    for(const pt of particles){
+      ctx.globalAlpha = pt.a;
+      ctx.fillStyle = pt.col;
+      ctx.fillRect(pt.x, pt.y, pt.s, pt.s);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---------- PARTICLES ----------
+  function spawnParticles(x,y,col,count=20){
+    for(let i=0;i<count;i++){
+      particles.push({
+        x:x, y:y,
+        vx: rand(-2,2), vy: rand(-3,3),
+        s: rand(1,4), a: 1, life: 40 + Math.floor(rand(0,40)), col: col
+      });
+    }
+  }
+
+  // ---------- OBSTACLES & POWERUPS ----------
+  function spawnObstacle(){
+    const typeRoll = Math.random();
+    const size = Math.floor(rand(20,45));
+    if(typeRoll < 0.55){
+      // top or bottom static
+      const pos = Math.random()<0.5? LOGICAL_H-20-size : 20;
+      obstacles.push({ x: LOGICAL_W, y: pos, w: size, h: size, type:'box' });
+    } else if(typeRoll < 0.8){
+      // moving vertical obstacle near center
+      const baseY = Math.random()<0.5? LOGICAL_H-20-size : 20;
+      obstacles.push({ x: LOGICAL_W, y: baseY, w: size*1.6, h: size, type:'sine', baseY, phase: rand(0,Math.PI*2), amp: rand(18,40), speedMult: rand(0.01,0.03) });
+    } else {
+      // wide obstacle
+      const pos = Math.random()<0.5? LOGICAL_H-20- (size*1.5) : 20;
+      obstacles.push({ x: LOGICAL_W, y: pos, w: size*2.2, h: size*1.2, type:'wide' });
+    }
+  }
+
+  function spawnPowerUp(){
+    const types = ['slow','shield','double'];
+    const pick = types[Math.floor(rand(0, types.length))];
+    const y = Math.random()<0.5 ? 40 : LOGICAL_H-40 - 30;
+    powerUps.push({ x: LOGICAL_W, y: y, size: 24, type: pick, vx: - (speed + rand(0.5,2)) });
+  }
+
+  // ---------- GAME LOGIC ----------
+  function updatePhysics(){
+    if(paused || gameOver || !running) return;
+
+    // background star movement
+    for(let li=0;li<stars.length;li++){
+      const layer = stars[li];
+      for(const s of layer){
+        s.x -= s.speed * (speed/8) * (li+1) * 0.15;
+        if(s.x < -10) s.x = LOGICAL_W + 10;
+      }
+    }
+
+    // player movement
+    player.y += player.dy;
+    player.dy += player.gravity * (player.flipped ? -1 : 1);
+
+    if(!player.flipped && player.y + player.size >= LOGICAL_H-20){
+      player.y = LOGICAL_H-20 - player.size;
+      player.dy = 0;
+    } else if (player.flipped && player.y <= 20){
+      player.y = 20;
+      player.dy = 0;
+    }
+
+    // spawn obstacles & powerups (with progressive frequency)
+    if(frame % Math.floor(80 - Math.min(level*2, 50)) === 0) spawnObstacle();
+    if(frame % 900 === 0 && Math.random() < 0.75) spawnPowerUp();
+
+    // update obstacles
+    for(const ob of obstacles){
+      ob.x -= speed + (speed * 0.02 * level);
+      if(ob.type==='sine'){
+        ob.phase += ob.speedMult;
+        ob.y = ob.baseY + Math.sin(ob.phase)*ob.amp;
+      }
+    }
+    obstacles = obstacles.filter(o => o.x + o.w > -50);
+
+    // update powerups
+    for(const p of powerUps){
+      p.x += p.vx;
+    }
+    powerUps = powerUps.filter(p => p.x + p.size > -50);
+
+    // update particles
+    for(const pt of particles){
+      pt.x += pt.vx; pt.y += pt.vy;
+      pt.vy += 0.08;
+      pt.life--; pt.a = pt.life/80;
+    }
+    particles = particles.filter(p => p.life>0);
+
+    // collisions: check player vs obstacles
+    for(const ob of obstacles){
+      if (player.x < ob.x + ob.w &&
+          player.x + player.size > ob.x &&
+          player.y < ob.y + ob.h &&
+          player.y + player.size > ob.y){
+        // collision
+        if(activePowers.shield > frame){
+          // consume shield
+          activePowers.shield = 0;
+          spawnParticles(player.x+player.size/2, player.y+player.size/2, '#ffff66', 28);
+          playBeep(200, 'sawtooth', 0.08, 0.12);
+        } else {
+          hitPlayer();
+        }
+        // remove obstacle
+        obstacles.splice(obstacles.indexOf(ob),1);
+        break;
+      }
+    }
+
+    // powerup pickup
+    for(const p of powerUps){
+      if (player.x < p.x + p.size &&
+          player.x + player.size > p.x &&
+          player.y < p.y + p.size &&
+          player.y + player.size > p.y){
+        applyPower(p.type);
+        spawnParticles(p.x + p.size/2, p.y + p.size/2, '#fff', 18);
+        playBeep(880, 'triangle', 0.08, 0.12);
+        powerUps.splice(powerUps.indexOf(p),1);
+      }
+    }
+
+    // score & level progression
+    const spdMultiplier = (activePowers.slow > frame) ? 0.5 : 1;
+    score += 0.1 * scoreMultiplier * spdMultiplier;
+    speed = speedBase + (level * 0.2);
+    if(activePowers.double > frame) scoreMultiplier = 2; else scoreMultiplier = 1;
+
+    // increase difficulty slowly
+    if(frame % 600 === 0) level += 1;
+
+    updateHUD();
+    frame++;
+  }
+
+  function hitPlayer(){
+    spawnParticles(player.x+player.size/2, player.y+player.size/2, '#ff4444', 28);
+    playBeep(120, 'sawtooth', 0.15, 0.18);
+    lives--;
+    if(lives <= 0) endGame();
+    updateHUD();
+  }
+
+  function applyPower(type){
+    const now = frame;
+    if(type==='slow') activePowers.slow = now + POWER_DURATION;
+    if(type==='shield') activePowers.shield = now + POWER_DURATION;
+    if(type==='double') activePowers.double = now + POWER_DURATION;
+    updateHUD();
+  }
+
+  // ---------- INPUT ----------
+  function flipGravity(){
+    if(gameOver || paused || !running) return;
+    player.flipped = !player.flipped;
+    player.dy = player.flipped ? -5 : 5;
+    spawnParticles(player.x+player.size/2, player.y+player.size/2, neon, 9);
+    playBeep(880, 'sine', 0.06, 0.09);
+  }
+  function togglePause(){
+    if(gameOver) return;
+    paused = !paused;
+    pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    if(!paused && running) { lastFrameTs = performance.now(); loop(); }
+  }
+
+  // ---------- DRAW FRAME ----------
+  function render(){
+    // clear
+    ctx.clearRect(0,0,LOGICAL_W,LOGICAL_H);
+
+    // stars (parallax)
+    drawStars();
+
+    // ground lines
+    drawGround();
+
+    // obstacles
+    for(const ob of obstacles) drawObstacle(ob);
+
+    // powerups
+    for(const p of powerUps) drawPower(p);
+
+    // player
+    drawPlayer();
+
+    // particles
+    drawParticles();
+
+    // UI overlays (lives etc drawn outside canvas)
+  }
+
+  // ---------- HUD ----------
+  function updateHUD(){
+    scoreEl.textContent = Math.floor(score);
+    levelEl.textContent = level;
+    highScore = Math.max(highScore, Math.floor(score));
+    highEl.textContent = localStorage.getItem(LOCAL_KEY) || highScore;
+    // lives
+    livesEl.innerHTML = '';
+    for(let i=0;i<lives;i++){
+      const d = document.createElement('div'); d.className='heart'; livesEl.appendChild(d);
+    }
+    // power list
+    powerList.innerHTML = '';
+    for(const [k,v] of Object.entries(activePowers)){
+      if(v > frame){
+        const el = document.createElement('div');
+        el.className = 'powerDot';
+        el.title = k + ' active';
+        powerList.appendChild(el);
+      }
+    }
+    // progress
+    const progress = clamp((score % 100) / 100, 0,1);
+    progressBar.style.width = `${progress*100}%`;
+  }
+
+  // ---------- GAME OVER ----------
+  function endGame(){
+    gameOver = true;
+    stopRunningMusic();
+    // store high score
+    const prev = parseInt(localStorage.getItem(LOCAL_KEY) || '0',10);
+    if(Math.floor(score) > prev) localStorage.setItem(LOCAL_KEY, Math.floor(score));
+    showMessage(`💀 Game Over — Score: ${Math.floor(score)}<br><small>Press Restart</small>`, 2200);
+    restartBtn.style.boxShadow = `0 0 20px ${accent}`;
+    // animate glow
+    let g = 0;
+    const anim = setInterval(()=>{ g+=1; if(g%2===0) canvas.style.boxShadow = `0 0 ${10+g}px ${accent}`; if(g>26){clearInterval(anim); canvas.style.boxShadow='';}},40);
+  }
+
+  // ---------- COUNTDOWN & START ----------
+  function startCountdown(){
+    let c = countdown;
+    showMessage(`${c}`, 900);
+    const t = setInterval(()=>{
+      c--;
+      if(c>0){
+        showMessage(`${c}`, 900);
+      } else {
+        clearInterval(t);
+        message.innerHTML = '';
+        running = true;
+        if(musicOn) try{ startMusic(); }catch(e){}
+        lastFrameTs = performance.now();
+        loop();
+      }
+    }, 900);
+  }
+
+  // ---------- MESSAGES ----------
+  function showMessage(txt, timeout=600){
+    message.innerHTML = txt;
+    if(timeout) setTimeout(()=>{ if(message.innerHTML === txt) message.innerHTML = ''; }, timeout);
+  }
+
+  // ---------- MAIN LOOP ----------
+  let lastFrameTs = 0;
+  function loop(ts){
+    if(gameOver || paused) return;
+    updatePhysics();
+    render();
+    if(!gameOver && running){
+      requestAnimationFrame(loop);
+    }
+  }
+
+  // ---------- EVENT HANDLERS ----------
+  document.addEventListener('keydown', e => {
+    if(e.code === 'Space'){ e.preventDefault(); if(!running && !gameOver){ startCountdown(); running=true; } else flipGravity(); }
+    if(e.code === 'KeyP') togglePause();
+    if(e.code === 'KeyF') toggleFullscreen();
+  });
+  canvas.addEventListener('click', ()=>{ if(!running && !gameOver){ startCountdown(); running=true; } else flipGravity(); });
+  restartBtn.addEventListener('click', ()=>{ resetGame(); playBeep(660,'triangle',0.08,0.08); });
+  pauseBtn.addEventListener('click', ()=>{ togglePause(); playBeep(440,'sine',0.06,0.06); });
+  fullscreenBtn.addEventListener('click', ()=>{ toggleFullscreen(); playBeep(720,'sine',0.06,0.08); });
+  soundToggle.addEventListener('click', ()=>{
+    musicOn = !musicOn;
+    soundToggle.textContent = musicOn ? 'Music: On' : 'Music: Off';
+    if(musicOn) startMusic(); else stopMusic();
+    playBeep(880, 'sine', 0.04, 0.06);
+  });
+
+  // Resize canvas CSS responsively (maintain logical resolution)
+  function adaptCanvas(){
+    // logical resolution stays; use CSS to scale to width
+    const maxWidth = Math.min(window.innerWidth - 32, 1200);
+    canvas.style.width = Math.max(260, maxWidth) + 'px';
+  }
+  window.addEventListener('resize', adaptCanvas);
+  adaptCanvas();
+
+  // Fullscreen
+  function toggleFullscreen(){
+    if(!document.fullscreenElement){
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  // ---------- THEME PICKER ----------
+  themePicker.querySelectorAll('.themeDot').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const val = el.getAttribute('data-color').split(',');
+      setTheme(val[0].trim(), val[1].trim());
+      playBeep(880,'sine',0.06,0.08);
+    });
+  });
+  function setTheme(a,b){
+    neon = a; accent = b;
+    document.documentElement.style.setProperty('--neon', neon);
+    document.documentElement.style.setProperty('--accent', accent);
+    document.documentElement.style.setProperty('--ui', neon);
+    document.documentElement.style.setProperty('--bg1', '#050505');
+    document.documentElement.style.setProperty('--bg2', '#000');
+  }
+
+  // ---------- POWERUPS + UI ----------
+  function updatePowerUI(){ updateHUD(); }
+  setInterval(updatePowerUI, 300);
+
+  // ---------- SPAWN TICK ----------
+  setInterval(()=>{
+    if(!paused && running && !gameOver){
+      // small chance to spawn additional obstacles as level increases
+      if(Math.random() < 0.4 + level*0.02) spawnObstacle();
+    }
+  }, 1000);
+
+  // ---------- PARTICLE + phys tick ----------
+  setInterval(()=>{
+    // particle velocity decay
+    particles.forEach(p=>{ p.vx *= 0.99; p.vy *= 0.99; });
+  }, 60);
+
+  // ---------- STARTUP ----------
+  // load highscore
+  const stored = parseInt(localStorage.getItem(LOCAL_KEY) || '0', 10);
+  if(!isNaN(stored)) highScore = stored;
+  highEl.textContent = highScore;
+
+  // start and initialize
+  resetGame();
+
+  // animate via requestAnimationFrame loop is started by countdown end
+  // also small UI tutorial fade
+  setTimeout(()=>{ document.getElementById('tutorial').style.opacity = 0.9; }, 500);
+
+  // small gamepad support (optional)
+  window.addEventListener('gamepadconnected', (e) => {
+    showMessage('Gamepad connected', 1200);
+  });
+
+  // expose some debug (optional)
+  window.__neon = { reset: resetGame, spawnObstacle, spawnPowerUp, applyPower };
+
+})();
+</script>
+</body>
+</html>
